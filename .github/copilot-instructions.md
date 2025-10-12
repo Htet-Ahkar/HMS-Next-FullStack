@@ -84,7 +84,6 @@ Follow standard **Next.js App Router structure**:
 ## Docker & Environment
 
 - **Docker and environment setup** (Dockerfile, docker-compose.yml, env.example) will be created manually
-- Copilot should not generate these files
 
 ---
 
