@@ -2,37 +2,64 @@
 # Uses an explicit node version and builds the app in a builder stage,
 # then copies the production output into a slim runtime image.
 
+# ARG NODE_VERSION=24.1.0
+
+# # --------------------- Builder ---------------------
+# FROM node:${NODE_VERSION}-alpine AS builder
+# WORKDIR /usr/src/app
+
+# # Install dependencies (cache node_modules between builds)
+# COPY package.json package-lock.json ./
+# RUN npm ci
+
+# # Copy source and build
+# COPY . .
+# RUN npm run build
+
+# # --------------------- Runner ---------------------
+# FROM node:${NODE_VERSION}-alpine AS runner
+# ENV NODE_ENV=production
+# WORKDIR /usr/src/app
+
+# # Install only production dependencies
+# COPY package.json package-lock.json ./
+# RUN npm ci --omit=dev
+
+# # Copy built Next.js output from builder
+# COPY --from=builder /usr/src/app/.next ./.next
+# COPY --from=builder /usr/src/app/public ./public
+
+# # Run as non-root
+# USER node
+
+# EXPOSE 3000
+
+# # Use start script that runs `next start` which serves the optimized build
+# CMD ["npm", "start"]
+
+
+# inherit from a existing image to add the functionality
 ARG NODE_VERSION=24.1.0
 
-# --------------------- Builder ---------------------
 FROM node:${NODE_VERSION}-alpine AS builder
-WORKDIR /usr/src/app
 
-# Install dependencies (cache node_modules between builds)
-COPY package.json package-lock.json ./
-RUN npm ci
+# RUN addgroup app && adduser -S -G app app
+# USER app
 
-# Copy source and build
+# Set the working directory and assign ownership to the non-root user
+WORKDIR /app
+
+# Copy the package.json and package-lock.json files into the image.
+COPY package*.json ./
+
+# Install the dependencies.
+RUN npm install
+
+# Copy the rest of the source files into the image.
 COPY . .
-RUN npm run build
 
-# --------------------- Runner ---------------------
-FROM node:${NODE_VERSION}-alpine AS runner
-ENV NODE_ENV=production
-WORKDIR /usr/src/app
-
-# Install only production dependencies
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
-# Copy built Next.js output from builder
-COPY --from=builder /usr/src/app/.next ./.next
-COPY --from=builder /usr/src/app/public ./public
-
-# Run as non-root
-USER node
-
+# Expose the port that the application listens on.
 EXPOSE 3000
 
-# Use start script that runs `next start` which serves the optimized build
-CMD ["npm", "start"]
+# Run the application.
+CMD npm run dev

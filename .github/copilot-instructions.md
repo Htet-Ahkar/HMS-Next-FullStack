@@ -94,3 +94,10 @@ Follow standard **Next.js App Router structure**:
 - **Context awareness:** Keep files focused; Copilot performs better in smaller, context-rich files
 - **Service layer generation:** Let Copilot scaffold repetitive DB queries and API route calls
 - **UI scaffolding:** Let Copilot prioritize ShadCN components, using Tailwind only for layout adjustments
+
+---
+
+<!--
+## ENV
+- update .env and .env.example accordingly
+-->
