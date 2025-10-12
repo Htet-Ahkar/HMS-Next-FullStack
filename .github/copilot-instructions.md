@@ -1,103 +1,182 @@
-# COPILOT_INSTRUCTIONS.md
+# 🧭 COPILOT_INSTRUCTIONS.md
 
-This file provides instructions for GitHub Copilot to assist in building the **Hospital Management System** project with Next.js, ShadCN UI, TailwindCSS, Zustand, Drizzle ORM, Better Auth, PostgreSQL, and Vitest.
-
----
-
-## Project Overview
-
-- **Goal:** Simple, product-ready hospital management system.
-- **Main features:**
-  - Role-based authentication (Admin, Doctor, Nurse/Receptionist, Patient)
-  - Dashboards for each role
-  - Patient, appointment, and medical record management
-  - CRUD operations through a service layer
+This file provides instructions for **GitHub Copilot** to assist in building the **Hospital Management System (HMS)** — a **Next.js full-stack application** using **Drizzle ORM**, **PostgreSQL**, **Better Auth**, **Zustand**, **ShadCN UI**, **TailwindCSS**, **Vitest**, and **Docker**.
 
 ---
 
-## Code Style & Conventions
+## 🏥 Project Overview
 
-- **Language:** TypeScript (`strict: true`)
+- **Goal:** Build a simple, production-ready Hospital Management System with modular backend and clean, responsive UI.
+- **Stack Overview:**
+  - **Next.js (App Router)** – Frontend + API routes
+  - **Drizzle ORM + PostgreSQL** – Database and migrations
+  - **Better Auth** – Authentication and RBAC
+  - **Zustand** – State management
+  - **ShadCN UI + TailwindCSS** – UI and layout
+  - **Vitest** – Testing
+  - **Docker** – Containerized environment
+
+---
+
+## 🧩 Code Style & Conventions
+
+- **Language:** TypeScript (`"strict": true`)
 - **Naming conventions:**
-  - camelCase for variables and functions
-  - PascalCase for components
+  - `camelCase` → variables, functions, Zustand stores
+  - `PascalCase` → components, types, interfaces
+  - `snake_case` → database table names and columns (Drizzle)
 - **Formatting:**
   - 2-space indentation
   - Single quotes
-  - Semicolons included
-- **Comments:** Minimal inline comments; rely on descriptive names and TypeScript types
+  - Semicolons required
+- **Comments:** Minimal inline comments — rely on descriptive names and TypeScript types.
 
 ---
 
-## UI & Styling
+## 🎨 UI & Styling
 
-- **Primary UI library:** ShadCN UI components
-- **Styling:** Use TailwindCSS for layout tweaks only
-- **Responsive design:** Generate responsive layouts by default
-
----
-
-## File & Folder Structure
-
-Follow standard **Next.js App Router structure**:
+- **Primary library:** ShadCN UI components
+- **TailwindCSS:** Use for responsive layouts and minor tweaks
+- **Responsive design:** Always assume mobile-first
+- **Accessibility:** Use ARIA props when relevant
+- **No custom design systems** — follow ShadCN and Tailwind conventions
 
 ---
 
-## State Management
+## 🗂️ Folder Structure
+
+```
+src/
+ ├─ app/
+ │   ├─ (auth)/          # Auth pages (login/register)
+ │   ├─ (dashboard)/     # Role dashboards
+ │   ├─ api/
+ │   │   ├─ users/
+ │   │   ├─ appointments/
+ │   │   ├─ records/
+ │   │   └─ auth/
+ │   └─ layout.tsx
+ │
+ ├─ components/
+ │   ├─ ui/              # ShadCN components
+ │   ├─ forms/           # Reusable form components
+ │   ├─ dashboard/       # Dashboard UI components
+ │
+ ├─ lib/
+ │   ├─ db/              # Drizzle setup & schema
+ │   ├─ services/        # CRUD service layer
+ │   ├─ auth/            # Better Auth config
+ │   └─ utils/           # Helpers
+ │
+ ├─ store/               # Zustand stores
+ ├─ types/               # Shared TS types
+ ├─ tests/               # Vitest test files
+ └─ docker/              # Docker configurations
+```
+
+---
+
+## 🪄 State Management
 
 - Use **Zustand exclusively** for global and UI state
-- Store user session, role, modals, notifications, and other UI states in Zustand
+- Separate stores by domain: `useAuthStore`, `useUIStore`, `useAppointmentStore`, etc.
+- Store user session, modals, notifications, filters
+- Avoid large monolithic stores
 
 ---
 
-## Testing
+## 🔐 Authentication & RBAC
 
-- Use **Vitest** for unit and integration tests
-- Keep tests colocated with their components or service files
-- E2E testing will be added later
-
----
-
-## Auth & Role-Based Access Control (RBAC)
-
-- Implement **Better Auth** for authentication
-- Enforce **RBAC both server-side** (middleware, API guards) and **client-side** (conditional rendering, redirects)
-- Roles: Admin, Doctor, Nurse/Receptionist, Patient
+- Use **Better Auth**
+- Roles: **Admin**, **Doctor**, **Receptionist**, **Patient**
+- Admin created from `.env` values:  
+  `ADMIN_NAME`, `ADMIN_PASSWORD`
+- Only Admin can create users; Patients can self-register
+- **Server-side enforcement:** Middleware, API guards
+- **Client-side enforcement:** Conditional rendering, redirects
 
 ---
 
-## API & Data Layer
+## 🧱 API & Data Layer
 
-- Use **Drizzle ORM** with PostgreSQL for database operations
-- Implement a **service layer** (`/lib/services/*`) for all DB interactions
-- Keep **API routes thin**, calling service functions for CRUD operations
+- Use **Drizzle ORM** for DB operations
+- Define schema in `/drizzle/schema`
+- Run migrations via `/drizzle`
+- Use a **service layer** to abstract DB logic:
+  - Services live in `/lib/services`
+  - API routes call services for CRUD
+  - Keep route handlers minimal and focused on input/output validation
 
----
+Example:
 
-## Copilot Commenting Behavior
+```ts
+// app/api/users/route.ts
+import { userService } from "@/lib/services/user";
 
-- Keep comments **minimal inline**
-- Rely on **descriptive names, TypeScript types, and ShadCN/Tailwind conventions** for clarity
-
----
-
-## Docker & Environment
-
-- **Docker and environment setup** (Dockerfile, docker-compose.yml, env.example) will be created manually
-
----
-
-## Usage Tips for Copilot
-
-- **Comment-first approach:** Write descriptive comments before functions, components, or stores to get accurate suggestions
-- **Iterate quickly:** Accept skeleton code, then refine manually
-- **Context awareness:** Keep files focused; Copilot performs better in smaller, context-rich files
-- **Service layer generation:** Let Copilot scaffold repetitive DB queries and API route calls
-- **UI scaffolding:** Let Copilot prioritize ShadCN components, using Tailwind only for layout adjustments
+export async function POST(req: Request) {
+  const data = await req.json();
+  const user = await userService.create(data);
+  return Response.json(user);
+}
+```
 
 ---
 
-<!--
-## ENV
-- update .env and .env.example accordingly
--->
+## 🧪 Testing
+
+- **Framework:** Vitest
+- **Tests:** colocate unit tests near components or services
+- **Integration tests:** optional folder `/tests`
+- Mock DB interactions using test utilities or an in-memory database
+- Future E2E: Playwright
+
+---
+
+## 🐳 Docker Setup
+
+- Dockerized setup with:
+  - `app` → Next.js app container
+  - `db` → PostgreSQL
+- `docker-compose.yml` defines both services
+- Automatically runs migrations on container startup
+
+---
+
+## ⚙️ Features Summary
+
+| Role             | Capabilities                                   |
+| ---------------- | ---------------------------------------------- |
+| **Admin**        | Manage all users, view analytics, manage roles |
+| **Doctor**       | View patients, manage medical records          |
+| **Receptionist** | Manage appointments, handle check-ins          |
+| **Patient**      | Book appointments, view personal history       |
+
+---
+
+## 🤖 Copilot Chat Instructions
+
+### ✅ General Rules
+
+- Prefer **Next.js App Router conventions**
+- Always **return `Response.json()`** in API routes
+- Use **async/await** consistently
+- Use **ShadCN UI** components when generating UI (avoid raw HTML)
+- Suggest **Zustand stores** for shared state
+- Suggest **service layer** for any data operations
+- Use **TypeScript types** for inputs and outputs
+- Avoid suggesting legacy `pages/` directory syntax
+
+---
+
+### 🧠 Copilot Autocomplete Preferences
+
+| Context            | Preferred Completion                                        |
+| ------------------ | ----------------------------------------------------------- |
+| **API Routes**     | Suggest using `Response.json()` and `NextResponse`          |
+| **Database Logic** | Use Drizzle queries through service layer                   |
+| **UI Components**  | Use ShadCN components + Tailwind for layout                 |
+| **Auth Flows**     | Use Better Auth hooks and middleware                        |
+| **State**          | Suggest creating Zustand store with clear selector patterns |
+| **Tests**          | Suggest Vitest syntax with `describe`, `it`, `expect`       |
+
+---
