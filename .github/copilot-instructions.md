@@ -138,6 +138,8 @@ export async function POST(req: Request) {
 
 - Future E2E: Playwright
 
+- After modified a file ask to change test if exist.
+
 ---
 
 ## ⚙️ Features Summary

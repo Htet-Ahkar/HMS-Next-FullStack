@@ -1,14 +1,45 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createUser } from "../userService";
+import {
+  createUser,
+  getUser,
+  getUsers,
+  updateUser,
+  deleteUser,
+} from "../userService";
 import { db } from "../../../drizzle/db";
 import { ValidationError, ConflictError } from "../../types/user";
 import bcrypt from "bcrypt";
 
+// Mock functions
+const mockSelectQuery = {
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+};
+
+const mockUpdateQuery = {
+  set: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+};
+
+const mockDeleteQuery = {
+  where: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+};
+
+const mockInsertQuery = {
+  values: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+};
+
 // Mock the database and bcrypt
-vi.mock("../../db", () => ({
+vi.mock("../../../drizzle/db", () => ({
   db: {
-    select: vi.fn(),
-    insert: vi.fn(),
+    select: vi.fn(() => mockSelectQuery),
+    insert: vi.fn(() => mockInsertQuery),
+    update: vi.fn(() => mockUpdateQuery),
+    delete: vi.fn(() => mockDeleteQuery),
   },
 }));
 
@@ -23,14 +54,109 @@ describe("userService", () => {
     vi.clearAllMocks();
   });
 
-  describe("createUser", () => {
-    const validUserData = {
-      name: "John Doe",
-      email: "john@example.com",
-      password: "password123",
-      role: "PATIENT" as const,
+  const validUserData = {
+    name: "John Doe",
+    email: "john@example.com",
+    password: "password123",
+    role: "PATIENT" as const,
+  };
+
+  const mockUser = {
+    id: "123",
+    name: "John Doe",
+    email: "john@example.com",
+    role: "PATIENT" as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  describe("getUsers", () => {
+    it("should return all users", async () => {
+      mockSelectQuery.returning.mockResolvedValue([mockUser]);
+
+      const result = await getUsers();
+
+      expect(result).toEqual([mockUser]);
+      expect(db.select).toHaveBeenCalled();
+    });
+  });
+
+  describe("getUser", () => {
+    it("should return a user by id", async () => {
+      mockSelectQuery.returning.mockResolvedValue([mockUser]);
+
+      const result = await getUser("123");
+
+      expect(result).toEqual(mockUser);
+      expect(db.select).toHaveBeenCalled();
+    });
+
+    it("should return null if user not found", async () => {
+      mockSelectQuery.returning.mockResolvedValue([]);
+
+      const result = await getUser("456");
+
+      expect(result).toBeNull();
+      expect(db.select).toHaveBeenCalled();
+    });
+  });
+
+  describe("updateUser", () => {
+    const updateData = {
+      name: "Jane Doe",
+      email: "jane@example.com",
     };
 
+    it("should update user successfully", async () => {
+      mockSelectQuery.returning.mockResolvedValue([]);
+      mockUpdateQuery.returning.mockResolvedValue([
+        { ...mockUser, ...updateData },
+      ]);
+
+      const result = await updateUser("123", updateData);
+
+      expect(result).toMatchObject(updateData);
+      expect(db.update).toHaveBeenCalled();
+    });
+
+    it("should throw ValidationError for invalid email", async () => {
+      await expect(
+        updateUser("123", { email: "invalid-email" })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("should throw ConflictError if email exists", async () => {
+      mockSelectQuery.returning.mockResolvedValue([
+        { id: "456", email: updateData.email },
+      ]);
+
+      await expect(updateUser("123", updateData)).rejects.toThrow(
+        ConflictError
+      );
+    });
+  });
+
+  describe("deleteUser", () => {
+    it("should delete user successfully", async () => {
+      mockDeleteQuery.returning.mockResolvedValue([{ id: "123" }]);
+
+      const result = await deleteUser("123");
+
+      expect(result).toBe(true);
+      expect(db.delete).toHaveBeenCalled();
+    });
+
+    it("should return false if user not found", async () => {
+      mockDeleteQuery.returning.mockResolvedValue([]);
+
+      const result = await deleteUser("456");
+
+      expect(result).toBe(false);
+      expect(db.delete).toHaveBeenCalled();
+    });
+  });
+
+  describe("createUser", () => {
     it("should create a user successfully", async () => {
       // const hashedPassword = "hashedPassword123";
       const expectedUser = {

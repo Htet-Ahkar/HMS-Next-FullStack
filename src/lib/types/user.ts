@@ -7,6 +7,13 @@ export interface CreateUserDto {
   role: UserRole;
 }
 
+export interface UpdateUserDto {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: UserRole;
+}
+
 export interface UserResponse {
   id: string;
   name: string;
