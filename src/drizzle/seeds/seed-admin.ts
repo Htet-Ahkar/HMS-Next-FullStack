@@ -1,14 +1,13 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { users } from "../schema";
-import { hash } from "bcryptjs";
 import { db } from "../db";
+import { hashedPassword } from "@/lib/utils";
 
 async function seedAdmin() {
   const adminName = process.env.ADMIN_NAME;
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
-  const salt = process.env.SALT;
 
   if (!adminName || !adminEmail || !adminPassword) {
     console.error("❌ Missing ADMIN_* environment variables.");
@@ -22,11 +21,12 @@ async function seedAdmin() {
     .limit(1);
 
   if (existing.length === 0) {
-    const hashedPassword = await hash(adminPassword, salt || 10);
+    const hash = await hashedPassword(adminPassword);
+
     await db.insert(users).values({
       name: adminName,
       email: adminEmail,
-      password: hashedPassword,
+      password: hash,
       role: "ADMIN",
     });
     console.log("✅ Admin user created successfully");

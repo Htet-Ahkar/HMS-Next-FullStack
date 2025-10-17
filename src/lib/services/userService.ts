@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
 import { users } from "../../drizzle/schema/users";
 import { db } from "../../drizzle/db";
 import {
@@ -9,6 +8,7 @@ import {
   ValidationError,
   ConflictError,
 } from "../types/user";
+import { hashedPassword } from "../utils";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -90,7 +90,7 @@ export const updateUser = async (
   // Hash new password if provided
   const updateData: Partial<typeof data> = { ...data };
   if (data.password) {
-    updateData.password = await bcrypt.hash(data.password, 10);
+    updateData.password = await hashedPassword(data.password);
   }
 
   // Update user
@@ -139,7 +139,7 @@ export const createUser = async (
   }
 
   // Hash password
-  const hashedPassword = await bcrypt.hash(data.password, 10);
+  const hash = await hashedPassword(data.password);
 
   // Create user
   const newUser = await db
@@ -147,7 +147,7 @@ export const createUser = async (
     .values({
       name: data.name,
       email: data.email,
-      password: hashedPassword,
+      password: hash,
       role: data.role,
     })
     .returning({
