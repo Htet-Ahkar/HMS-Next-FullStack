@@ -11,7 +11,6 @@ export interface UpdateUserDto {
   name?: string;
   email?: string;
   password?: string;
-  role?: UserRole;
 }
 
 export interface UserResponse {
@@ -34,5 +33,12 @@ export class ConflictError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ConflictError";
+  }
+}
+
+export class MethodNotAllowedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MethodNotAllowedError";
   }
 }

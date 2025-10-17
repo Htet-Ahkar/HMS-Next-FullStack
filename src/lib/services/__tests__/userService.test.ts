@@ -7,7 +7,11 @@ import {
   deleteUser,
 } from "../userService";
 import { db } from "../../../drizzle/db";
-import { ValidationError, ConflictError } from "../../types/user";
+import {
+  ValidationError,
+  ConflictError,
+  MethodNotAllowedError,
+} from "../../types/user";
 import bcrypt from "bcrypt";
 
 // Mock functions
@@ -200,6 +204,28 @@ describe("userService", () => {
 
       await expect(createUser(validUserData)).rejects.toThrow(ConflictError);
       expect(db.select).toHaveBeenCalled();
+      expect(db.insert).not.toHaveBeenCalled();
+    });
+
+    it("should throw MethodNotAllowedError for non-PATIENT roles", async () => {
+      const adminData = { ...validUserData, role: "ADMIN" as const };
+      const doctorData = { ...validUserData, role: "DOCTOR" as const };
+      const receptionistData = {
+        ...validUserData,
+        role: "RECEPTIONIST" as const,
+      };
+
+      await expect(createUser(adminData)).rejects.toThrow(
+        MethodNotAllowedError
+      );
+      await expect(createUser(doctorData)).rejects.toThrow(
+        MethodNotAllowedError
+      );
+      await expect(createUser(receptionistData)).rejects.toThrow(
+        MethodNotAllowedError
+      );
+
+      expect(db.select).not.toHaveBeenCalled();
       expect(db.insert).not.toHaveBeenCalled();
     });
   });

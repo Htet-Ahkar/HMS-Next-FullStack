@@ -7,6 +7,7 @@ import {
   UserResponse,
   ValidationError,
   ConflictError,
+  MethodNotAllowedError,
 } from "../types/user";
 import { hashedPassword } from "../utils";
 
@@ -116,6 +117,11 @@ export const updateUser = async (
 export const createUser = async (
   data: CreateUserDto
 ): Promise<UserResponse> => {
+  // Only allow PATIENT role creation
+  if (data.role !== "PATIENT") {
+    throw new MethodNotAllowedError("Only PATIENT role creation is allowed");
+  }
+
   // Validate input
   if (!data.name || data.name.length < 2) {
     throw new ValidationError("Name must be at least 2 characters long");
