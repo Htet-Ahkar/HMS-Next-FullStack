@@ -17,3 +17,7 @@ export const users = pgTable("users", {
   createdAt: createdAt,
   updatedAt: updatedAt,
 });
+
+// TypeScript type for the user
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
